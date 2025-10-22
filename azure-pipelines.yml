@@ -5,7 +5,7 @@ pool:
   vmImage: 'ubuntu-latest'
 
 steps:
-# Install Microsoft repo + sqlcmd v18
+# Step 1: Install Microsoft SQL tools (sqlcmd)
 - script: |
     set -e
     sudo apt-get update
@@ -14,14 +14,17 @@ steps:
     curl https://packages.microsoft.com/config/ubuntu/20.04/prod.list | sudo tee /etc/apt/sources.list.d/mssql-release.list
     sudo apt-get update
     sudo ACCEPT_EULA=Y apt-get install -y mssql-tools18 unixodbc-dev
-    echo "✅ mssql-tools18 installed"
+    echo "✅ mssql-tools18 installed successfully"
   displayName: 'Install sqlcmd (mssql-tools18)'
 
-# Run schema using absolute path to sqlcmd
+# Step 2: Apply your schema.sql file to the Azure SQL Database
 - script: |
-    /opt/mssql-tools18/bin/sqlcmd -S tcp:dmprojserver.database.windows.net,1433 \
-      -d DMprojDB \
-      -U alefia \
-      -P $(SQL_PASSWORD) \
-      -i schema.sql
+    set -euo pipefail
+    set +H
+    /opt/mssql-tools18/bin/sqlcmd \
+      -S "tcp:dmprojserver.database.windows.net,1433" \
+      -d "DMprojDB" \
+      -U "alefia" \
+      -P "#A032603aa" \
+      -i "schema.sql"
   displayName: 'Apply schema.sql to DMprojDB'
