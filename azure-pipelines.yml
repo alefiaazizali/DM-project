@@ -5,7 +5,7 @@ pool:
   vmImage: 'ubuntu-latest'
 
 steps:
-# Step 1: Install Microsoft SQL tools (sqlcmd)
+# Step 1: Install Microsoft SQL tools
 - script: |
     set -e
     sudo apt-get update
@@ -15,9 +15,9 @@ steps:
     sudo apt-get update
     sudo ACCEPT_EULA=Y apt-get install -y mssql-tools18 unixodbc-dev
     echo "✅ mssql-tools18 installed successfully"
-  displayName: 'Install sqlcmd (mssql-tools18)'
+  displayName: 'Install sqlcmd and bcp tools'
 
-# Step 2: Apply your schema.sql file to the Azure SQL Database
+# Step 2: Apply schema to create tables
 - script: |
     set -euo pipefail
     set +H
@@ -27,4 +27,31 @@ steps:
       -U "alefia" \
       -P "#A032603aa" \
       -i "schema.sql"
+    echo "✅ Schema applied successfully"
   displayName: 'Apply schema.sql to DMprojDB'
+
+# Step 3: Import Brand Detail CSV data
+- script: |
+    set -euo pipefail
+    set +H
+    /opt/mssql-tools18/bin/bcp BrandDetail in "brand-detail-url-etc_0_0_0.csv" \
+      -S "tcp:dmprojserver.database.windows.net,1433" \
+      -d "DMprojDB" \
+      -U "alefia" \
+      -P "#A032603aa" \
+      -c -t "," -F 2
+    echo "✅ BrandDetail CSV imported successfully"
+  displayName: 'Import BrandDetail CSV into DMprojDB'
+
+# Step 4: Import DailySpend CSV data
+- script: |
+    set -euo pipefail
+    set +H
+    /opt/mssql-tools18/bin/bcp DailySpend in "2021-01-19--data_01be88c2-0306-48b3-0042-fa0703282ad6_1304_5_0.csv" \
+      -S "tcp:dmprojserver.database.windows.net,1433" \
+      -d "DMprojDB" \
+      -U "alefia" \
+      -P "#A032603aa" \
+      -c -t "," -F 2
+    echo "✅ DailySpend CSV imported successfully"
+  displayName: 'Import DailySpend CSV into DMprojDB'
